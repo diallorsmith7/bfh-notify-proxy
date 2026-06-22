@@ -3,8 +3,30 @@
 // It receives { email } from the Coming Soon page and forwards it to Airtable,
 // keeping your Airtable Personal Access Token secret on the server side.
 
+// Allowed origins — domains permitted to call this function from the browser.
+const ALLOWED_ORIGINS = [
+  'https://blkfamilyhealth.com',
+  'https://www.blkfamilyhealth.com',
+];
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 export default async function handler(req, res) {
-  // Only allow POST requests
+  setCorsHeaders(req, res);
+
+  // Browsers send a pre-flight OPTIONS request before the real POST —
+  // it must get a quick, empty 200 response or the real request never fires.
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
